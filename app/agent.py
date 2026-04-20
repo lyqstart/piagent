@@ -2,11 +2,14 @@ from app.messages import Message
 from app.llm import LLMClient
 
 class Agent:
-    def __init__(self, llm: LLMClient):
+    def __init__(self, llm: LLMClient, system_prompt: str = ""):
         self.llm = llm
         self.messages: list[Message] = []
 
-    def add_user_message(self, content: str):
+        if system_prompt:
+            self.messages.append(Message(role="system", content=system_prompt))
+
+    def add_user_message(self, content: str)-> None:
         self.messages.append(Message(role="user", content=content))
     
     def add_assistant_message(self, content: str):
@@ -17,3 +20,6 @@ class Agent:
         answer = self.llm.complete(self.messages)
         self.add_assistant_message(answer)
         return answer
+    
+    def get_history(self) -> list[Message]:
+        return self.messages
