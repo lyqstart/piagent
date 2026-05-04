@@ -3,3 +3,4 @@ pydantic
 typer
 rich
 python-dotenv
+tzdata

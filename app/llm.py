@@ -17,3 +17,36 @@ class LLMClient:
         )
         return response.choices[0].message.content or ""
     
+    def _to_api_message(self, messages:list[Message]) -> list[dict]:
+        api_messages: list[dict] = []
+
+        for message in messages:
+            item = {"role": message.role}
+
+            if message.content is not None:
+                item["content"] = message.content
+
+            if message.name is not None:
+                item["name"] = message.name
+
+            if message.tool_call_id is not None:
+                item["tool_call_id"] = message.tool_call_id
+            
+            if message.tool_calls is not None:
+                item["tool_calls"] = message.tool_calls
+            
+            api_messages.append(item)
+
+        return api_messages
+        
+    def create_response(self, messages: list[Message], tools: list[dict] | None = None) :
+        if tools:
+            return self.client.chat.completions.create(
+                model=self.model,
+                messages=self._to_api_message(messages),
+                tools=tools
+            )
+        return self.client.chat.completions.create(
+            model=self.model,
+            messages=self._to_api_message(messages)
+        )

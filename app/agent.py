@@ -1,12 +1,24 @@
 from app.messages import Message
 from app.llm import LLMClient
 from app.session import SessionStore
+from app.tools import ToolRegistry
+from app.loop import AgentLoop
+from app.events import EventHandler
 
 class Agent:
-    def __init__(self, llm: LLMClient, system_prompt: str | None = None,
-                 session_store: SessionStore | None = None,):
+    def __init__(self, llm: LLMClient, 
+                 system_prompt: str | None = None,
+                 session_store: SessionStore | None = None,
+                 event_handler: EventHandler | None = None
+                 ):
         self.llm = llm
         self.session_store = session_store
+        self.tool_registry = ToolRegistry()
+        self.loop = AgentLoop(
+            llm = self.llm,
+            tool_registry= self.tool_registry,
+            event_handler= event_handler,
+        )
         
         if self.session_store:
             self.messages:list[Message] = self.session_store.load_messages()
@@ -14,28 +26,30 @@ class Agent:
             self.messages:list[Message] = []
 
         if system_prompt and not self.messages:
-            system_message = Message(role="system", content=system_prompt)
-            self.messages.append(system_message)
-            if self.session_store:
-                self.session_store.append_message(system_message)
+            self._append_message(Message(role="system", content=system_prompt))
+
+    def _append_message(self, message: Message) -> None:
+        self.messages.append(message)
+        if self.session_store:
+            self.session_store.append_message(message)
 
     def add_user_message(self, content: str)-> None:
-        message = Message(role="user", content=content)
-        self.messages.append(message)
-        if self.session_store:
-            self.session_store.append_message(message)
+        self._append_message(Message(role="user", content=content))
     
-    def add_assistant_message(self, content: str):
-        message = Message(role="assistant", content=content)
-        self.messages.append(message)
-        if self.session_store:
-            self.session_store.append_message(message)
 
     def run(self, prompt: str) -> str:
         self.add_user_message(prompt)
-        answer = self.llm.complete(self.messages)
-        self.add_assistant_message(answer)
-        return answer
+
+        new_messages = self.loop.run(self.messages)
+
+        for message in new_messages:
+            self._append_message(message)
+        
+        for message in new_messages:
+            if message.role == "assistant" and not message.tool_calls:
+                return message.content or ""
+            
+        return ""
     
     def get_history(self) -> list[Message]:
         return self.messages
