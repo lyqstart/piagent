@@ -46,7 +46,10 @@ def run(model: str = "", reset: bool = False, verbose: bool = True):
         llm = llm,
         system_prompt=(
             "你是一个简洁、准确的 AI 助手。"
-            "当用户询问当前时间时，必须优先调用 get_time 工具，不要自己猜。"
+            "当用户询问当前时间时，优先调用 get_time。"
+            "当用户要求读取本地文本文件时，调用 read_text_file。"
+            "当用户要求写入本地文本文件时，调用 write_text_file。"
+            "不要假装已经读取或写入文件，必须依赖工具结果回答。"
         ),
         session_store=session_store,
         event_handler = console_event_handler if verbose else None,

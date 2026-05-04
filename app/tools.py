@@ -1,67 +1,39 @@
 import json
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from typing import Any, Callable
+from pathlib import Path
 
+ToolHandler = Callable[..., Any]
 
 class ToolRegistry:
     def __init__(self):
-        self._tools = {
-            "get_time": self.get_time,
+        self._schemas: dict[str, dict] = {}
+        self._handlers: dict[str, ToolHandler] = {}
+        self._register_builtin_tools()
+
+    def register_tool(
+        self,
+        *,
+        name: str,
+        description: str,
+        parameters: dict,
+        handler: ToolHandler,            
+    ) -> None:
+        self._schemas[name] = {
+            "type": "function",
+            "function": {
+                "name": name,
+                "description": description,
+                "parameters": parameters,
+            },
         }
 
-        self._timezone_aliases = {
-            "上海": "Asia/Shanghai",
-            "中国": "Asia/Shanghai",
-            "北京时间": "Asia/Shanghai",
-            "beijing": "Asia/Shanghai",
-            "shanghai": "Asia/Shanghai",
-            "asia/shanghai": "Asia/Shanghai",
-
-            "洛杉矶": "America/Los_Angeles",
-            "美国洛杉矶": "America/Los_Angeles",
-            "los angeles": "America/Los_Angeles",
-            "los_angeles": "America/Los_Angeles",
-            "america/los_angeles": "America/Los_Angeles",
-            "pst": "America/Los_Angeles",
-            "us/pacific": "America/Los_Angeles",
-
-            "纽约": "America/New_York",
-            "new york": "America/New_York",
-            "america/new_york": "America/New_York",
-            "est": "America/New_York",
-
-            "伦敦": "Europe/London",
-            "london": "Europe/London",
-            "europe/london": "Europe/London",
-
-            "东京": "Asia/Tokyo",
-            "tokyo": "Asia/Tokyo",
-            "asia/tokyo": "Asia/Tokyo",
-
-            "utc": "UTC",
-        }
+        self._handlers[name] = handler
 
     def schemas(self) -> list[dict]:
-        return [
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_time",
-                    "description": "获取指定城市或时区的当前时间。优先传 IANA 时区名，例如 Asia/Shanghai、America/Los_Angeles。也支持常见城市名，如 上海、洛杉矶、东京、伦敦。",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "timezone": {
-                                "type": "string",
-                                "description": "城市名或 IANA 时区名，例如 上海、Asia/Shanghai、洛杉矶、America/Los_Angeles"
-                            }
-                        },
-                        "required": ["timezone"],
-                    },
-                },
-            }
-        ]
-
+        return list(self._schemas.values())
+    
     def execute_tool_call(self, tool_call) -> str:
         tool_name = tool_call.function.name
         raw_arguments = tool_call.function.arguments or "{}"
@@ -73,50 +45,108 @@ class ToolRegistry:
                 {"error": f"工具参数不是合法 JSON: {raw_arguments}"},
                 ensure_ascii=False,
             )
-
-        if tool_name not in self._tools:
+        
+        handler = self._handlers.get(tool_name)
+        if handler is None:
             return json.dumps(
                 {"error": f"未知工具: {tool_name}"},
                 ensure_ascii=False,
             )
-
+        
         try:
-            result = self._tools[tool_name](**arguments)
+            result = handler(**arguments)
             return json.dumps(result, ensure_ascii=False)
         except Exception as e:
             return json.dumps(
                 {"error": str(e)},
                 ensure_ascii=False,
             )
+        
+    def _register_builtin_tools(self) -> None:
+        self.register_tool(
+            name="get_time",
+            description=(
+                "获取指定时区的当前时间"
+            ),
+            parameters={
+                "type": "object",
+                "properties": {
+                    "timezone": {
+                        "type": "string",
+                        "description": "IANA 时区名，例如 Asia/Shanghai 或 America/Los_Angeles"
+                    }
+                },
+            },
+            handler=self.get_time,
+        )
 
-    def normalize_timezone(self, timezone: str) -> str:
-        value = timezone.strip()
-        if not value:
-            raise ValueError("timezone 不能为空")
+        self.register_tool(
+            name="read_text_file",
+            description="读取本地文本文件内容",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "要读取的本地文件路径",
+                    }
+                },
+                "required": ["path"],
+            },
+            handler=self.read_text_file,
+        )
 
-        normalized_key = value.lower().strip()
-        normalized_key = normalized_key.replace("_", " ")
+        self.register_tool(
+            name="write_text_file",
+            description="写入本地文本文件内容",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "要写入的本地文件路径",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "要写入的文本内容",
+                    },
+                },
+                "required": ["path", "content"],
+            },
+            handler=self.write_text_file,
+        )
 
-        if normalized_key in self._timezone_aliases:
-            return self._timezone_aliases[normalized_key]
-
-        if "/" in value:
-            return value
-
-        return value
-
-    def get_time(self, timezone: str) -> dict:
-        normalized_timezone = self.normalize_timezone(timezone)
-
-        try:
-            now = datetime.now(ZoneInfo(normalized_timezone))
-        except ZoneInfoNotFoundError:
-            raise ValueError(
-                f"未找到时区: {timezone}。标准写法示例: Asia/Shanghai, America/Los_Angeles"
-            )
-
+    def get_time(self, timezone: str = "Asia/Shanghai") -> dict:
+        now = datetime.now(ZoneInfo(timezone))
         return {
-            "input_timezone": timezone,
-            "normalized_timezone": normalized_timezone,
+            "tool": "get_time",
+            "timezone": timezone,
             "current_time": now.isoformat(timespec="seconds"),
         }
+
+    def read_text_file(self, path: str) -> dict:
+        file_path = Path(path)
+
+        if not file_path.exists():
+            raise FileNotFoundError(f"文件不存在: {path}")
+        
+        if not file_path.is_file():
+            raise ValueError(f"不是一个文件: {path}")
+        
+        content = file_path.read_text(encoding="utf-8")
+        return {
+            "tool": "read_text_file",
+            "path": path,
+            "content": content,
+        }
+    
+    def write_text_file(self, path: str, content: str) -> dict:
+        file_path = Path(path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(content, encoding="utf-8")
+        return {
+            "tool": "write_text_file",
+            "path": path,
+            "content": content,
+        }
+
