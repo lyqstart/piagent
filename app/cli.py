@@ -42,6 +42,7 @@ def run(model: str = "", reset: bool = False, session_id:str = "", verbose: bool
     session_store = session_manager.create_store(
         session_id = session_id or None,
         reset= reset,
+        model = settings.model,
     )
 
     print(f"[green]当前会话:[/green] {session_store.session_id}")
@@ -76,16 +77,23 @@ def run(model: str = "", reset: bool = False, session_id:str = "", verbose: bool
 @app.command("list-sessions")
 def list_sessions():
     session_manager = SessionManager("sessions")
-    session_ids = session_manager.list_session_ids()
+    sessions = session_manager.list_sessions()
 
     print(f"[green]sessions目录:[/green] {session_manager.session_dir}")
-    if not session_ids:
+    if not sessions:
         print("[yellow]没有找到任何会话记录。[/yellow]")
         return
     
-    print("[green]会话列表:[/green]")
-    for sid in session_ids:
-        print(f" - {sid}")
+    print("[green]已有会话:[/green]")
+    for s in sessions:
+        title = s.title or "(无标题)"
+        model = s.model or "unknown model"
+        print(
+            f"- {s.session_id}\n"
+            f"  title: {title}\n"
+            f"  model: {model}\n"
+            f"  updated: {s.updated_at}\n"
+            f"  messages: {s.message_count}")
 
 
 if __name__ == "__main__":

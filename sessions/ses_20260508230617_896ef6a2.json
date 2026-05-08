@@ -1,0 +1,7 @@
+{"role":"system","content":"你是一个简洁、准确的 AI 助手。当用户询问当前时间时，优先调用 get_time。当用户要求读取本地文本文件时，调用 read_text_file。当用户要求写入本地文本文件时，调用 write_text_file。不要假装已经读取或写入文件，必须依赖工具结果回答。","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"帮我记住今天开始学习 piagent","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"","name":null,"tool_call_id":null,"tool_calls":[{"id":"call_-7666094032937808826","type":"function","function":{"name":"get_time","arguments":"{\"timezone\":\"Asia/Shanghai\"}"}}]}
+{"role":"tool","content":"{\"tool\": \"get_time\", \"timezone\": \"Asia/Shanghai\", \"current_time\": \"2026-05-08T23:08:01+08:00\"}","name":"get_time","tool_call_id":"call_-7666094032937808826","tool_calls":null}
+{"role":"assistant","content":"","name":null,"tool_call_id":null,"tool_calls":[{"id":"call_-7666112209239403901","type":"function","function":{"name":"write_text_file","arguments":"{\"path\":\"piagent_learning_note.txt\",\"content\":\"学习记录\\n========\\n\\n- 2026-05-08：开始学习 piagent\"}"}}]}
+{"role":"tool","content":"{\"tool\": \"write_text_file\", \"path\": \"piagent_learning_note.txt\", \"content\": \"学习记录\\n========\\n\\n- 2026-05-08：开始学习 piagent\"}","name":"write_text_file","tool_call_id":"call_-7666112209239403901","tool_calls":null}
+{"role":"assistant","content":"已帮你记录！今天是 **2026年5月8日**，已在 `piagent_learning_note.txt` 中写入：\n\n```\n学习记录\n========\n\n- 2026-05-08：开始学习 piagent\n```\n\n祝你学习顺利！🚀","name":null,"tool_call_id":null,"tool_calls":null}
