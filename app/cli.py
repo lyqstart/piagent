@@ -34,7 +34,12 @@ def console_event_handler(event_type: str, payload: dict) -> None:
         print(f"[magenta]EVENT[/magenta] loop_end | reason={payload['reason']}")
 
 @app.command()
-def run(model: str = "", reset: bool = False, session_id:str = "", verbose: bool = True):
+def run(
+    model: str = "", 
+    reset: bool = False, 
+    session_id:str = "", 
+    title: str = "", 
+    verbose: bool = True):
     settings = get_settings(model=model or None)
     llm = LLMClient(settings = settings)
 
@@ -43,9 +48,12 @@ def run(model: str = "", reset: bool = False, session_id:str = "", verbose: bool
         session_id = session_id or None,
         reset= reset,
         model = settings.model,
+        title = title,
     )
 
+    metadata = session_store.load_metadata()    
     print(f"[green]当前会话:[/green] {session_store.session_id}")
+    print(f"[green]会话标题：[/green] {metadata.title or '(无标题)'}")
 
     agent = Agent(
         llm = llm,

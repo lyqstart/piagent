@@ -21,10 +21,11 @@ class SessionMetadata:
 
 
 class SessionStore:
-    def __init__(self, session_file: str, model: str = ""):
+    def __init__(self, session_file: str, model: str = "", title: str = ""):
         self.session_file = Path(session_file).resolve()
         self.session_file.parent.mkdir(parents=True, exist_ok=True)
         self.model = model
+        self.title = title
         self.meta_file = self.session_file.with_suffix(".meta.json")
         self._ensure_metadata()
 
@@ -87,9 +88,15 @@ class SessionStore:
             created_at = created_at,
             updated_at = created_at,
             model = self.model,
-            title = "",
+            title = self.title,
             message_count = 0,
         )
+        self._save_metadata(metadata)
+
+    def set_title(self, title: str) -> None:
+        metadata = self.load_metadata()
+        metadata.title = title.strip()
+        metadata.updated_at = now_iso()
         self._save_metadata(metadata)
 
     def _build_title(self, text: str, limit: int = 30) -> str:
@@ -120,15 +127,19 @@ class SessionManager:
         self, 
         session_id: str | None =None, 
         reset: bool = False,
-        model: str = "") -> SessionStore:
+        model: str = "",
+        title: str = "",) -> SessionStore:
         final_session_id = session_id or self.create_session_id()
         store = SessionStore(
             session_file=str(self.get_session_path(final_session_id)),
             model = model,
+            title = title,
         )
 
         if reset:
             store.clear()
+            if title:
+                store.set_title(title)
 
         return store
     
