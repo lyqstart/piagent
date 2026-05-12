@@ -114,6 +114,9 @@ def resume(
         print(f"[red]会话不存在: {session_id} [/red]")
         return
     
+    store = session_manager.get_store(session_id)
+    store.ensure_title()
+    
     start_chat(
         model = model,
         session_id = session_id,
@@ -134,6 +137,9 @@ def resume_latest(
         print("[red]没有可恢复的会话。[/red]")
         return 
     
+    store = session_manager.get_store(latest.session_id)
+    store.ensure_title()
+
     print(f"[green]恢复最近会话:[/green] {latest.session_id}")
     print(f"[green]会话标题：[/green] {latest.title or '(无标题)'}")
 
@@ -144,6 +150,24 @@ def resume_latest(
         reset = False,
         verbose = verbose,
     )
+
+@app.command("rename-session")
+def rename_session(
+    session_id: str = typer.Option(..., "--session-id", help="会话ID"),
+    title: str = typer.Option(..., "--title", help="新的会话标题"),
+):
+    session_manager = SessionManager("sessions")
+
+    if not session_manager.session_exists(session_id):
+        print(f"[red]会话不存在: {session_id} [/red]")
+        return
+    
+    store = session_manager.get_store(session_id)
+    store.set_title(title)
+
+    metadata = store.load_metadata()
+    print(f"[green]已更新会话标题:[/green] {metadata.session_id}")
+    print(f"[green]新标题:[/green] {metadata.title}")
 
 @app.command("list-sessions")
 def list_sessions():
@@ -156,15 +180,17 @@ def list_sessions():
         return
     
     print("[green]已有会话:[/green]")
-    for s in sessions:
+    for index, s in enumerate(sessions, start=1):
         title = s.title or "(无标题)"
         model = s.model or "unknown model"
         print(
-            f"- {s.session_id}\n"
-            f"  title: {title}\n"
-            f"  model: {model}\n"
-            f"  updated: {s.updated_at}\n"
-            f"  messages: {s.message_count}")
+            f"{index}. {s.session_id}\n"
+            f"   title: {title}\n"
+            f"   model: {model}\n"
+            f"   updated: {s.updated_at}\n"
+            f"   messages: {s.message_count}"
+        )
+
 
 
 if __name__ == "__main__":

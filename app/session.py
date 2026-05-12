@@ -95,11 +95,28 @@ class SessionStore:
 
     def set_title(self, title: str) -> None:
         metadata = self.load_metadata()
-        metadata.title = title.strip()
+        metadata.title = self._normalize_title(title)
         metadata.updated_at = now_iso()
         self._save_metadata(metadata)
 
     def _build_title(self, text: str, limit: int = 30) -> str:
+        return self._normalize_title(text, limit)
+    
+    def ensure_title(self) -> None:
+        metadata = self.load_metadata()
+        if metadata.title:
+            return 
+        
+        messages = self.load_messages()
+
+        for message in messages:
+            if message.role == "user" and message.content:
+                metadata.title = self._build_title(message.content)
+                metadata.updated_at = now_iso()
+                self._save_metadata(metadata)
+                return
+    
+    def _normalize_title(self, text: str, limit: int =40 ) -> str:
         text = " ".join(text.strip().split())
         if len(text) <= limit:
             return text
@@ -128,6 +145,12 @@ class SessionManager:
         if not sessions:
             return None
         return sessions[0]
+    
+    def get_store(self, session_id: str, model : str = "") -> SessionStore:
+        return SessionStore(
+            session_file = str(self.get_session_path(session_id)),
+            model = model,
+        )
     
     def create_store(
         self, 
