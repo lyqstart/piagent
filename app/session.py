@@ -143,6 +143,9 @@ class SessionManager:
 
         return store
     
+    def session_exists(self, session_id: str) -> bool:
+        return self.get_session_path(session_id).exists()
+    
     def list_sessions(self) -> list[SessionMetadata]:
         data_files = [
             p for p in self.session_dir.iterdir()
