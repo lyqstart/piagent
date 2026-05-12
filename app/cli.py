@@ -122,6 +122,29 @@ def resume(
         verbose = verbose,
     )
 
+@app.command("resume-latest")
+def resume_latest(
+    model : str = "",
+    verbose: bool = True,
+):
+    session_manager = SessionManager("sessions")
+    latest = session_manager.get_lastest_session()
+
+    if latest is None:
+        print("[red]没有可恢复的会话。[/red]")
+        return 
+    
+    print(f"[green]恢复最近会话:[/green] {latest.session_id}")
+    print(f"[green]会话标题：[/green] {latest.title or '(无标题)'}")
+
+    start_chat(
+        model = model,
+        session_id = latest.session_id,
+        title = "",
+        reset = False,
+        verbose = verbose,
+    )
+
 @app.command("list-sessions")
 def list_sessions():
     session_manager = SessionManager("sessions")

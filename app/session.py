@@ -123,6 +123,12 @@ class SessionManager:
     def get_session_path(self, session_id: str) -> Path:
         return self.session_dir / f"{session_id}.json"
     
+    def get_lastest_session(self) -> SessionMetadata | None:
+        sessions = self.list_sessions()
+        if not sessions:
+            return None
+        return sessions[0]
+    
     def create_store(
         self, 
         session_id: str | None =None, 
