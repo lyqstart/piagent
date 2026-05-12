@@ -1,3 +1,4 @@
+from pathlib  import Path
 import typer 
 from rich import print
 from app.llm import LLMClient
@@ -194,6 +195,50 @@ def print_session_messages(messages: list[Message]) -> None:
     for index, message in enumerate(messages, start=1):
         print(f"{index}.{format_message_brief(message)}")
 
+def build_session_markdown(metadata, messages: list[Message]) -> str:
+    lines: list[str] = []
+
+    lines.append(f"# Session {metadata.session_id}")
+    lines.append("")
+    lines.append(f"- Title: {metadata.title or '(无标题)'}")
+    lines.append(f"- Model: {metadata.model or 'unknown model'}")
+    lines.append(f"- Created At: {metadata.created_at}")
+    lines.append(f"- Updated At: {metadata.updated_at}")
+    lines.append(f"- Message Count: {metadata.message_count}")
+    lines.append("")
+    lines.append("## Messages")
+    lines.append("")
+
+    for index, message in enumerate(messages, start=1):
+        role = message.role.upper()
+        lines.append(f"### {index}. {role}")
+
+        if message.name:
+            lines.append(f"- name: {message.name}")
+
+        if message.tool_call_id:
+            lines.append(f"- tool_call_id: {message.tool_call_id}")
+
+        if message.tool_calls:
+            lines.append("- tool_calls:")
+            for tool_call in message.tool_calls:
+                call_id = tool_call.get("id", "")
+                function = tool_call.get("function", {})
+                function_name = function.get("name", "")
+                function_arguments = function.get("arguments", "")
+                lines.append(f"  - id: {call_id}")
+                lines.append(f"    function: {function_name}")
+                lines.append(f"    arguments: {function_arguments}")
+
+        content = (message.content or "").strip()
+        lines.append("")
+        lines.append("```text")
+        lines.append(content)
+        lines.append("```")
+        lines.append("")
+
+    return "\n".join(lines)
+
 @app.command("show-session")
 def show_session(
     session_id: str = typer.Option(..., "--session-id", help="会话ID"),
@@ -216,6 +261,36 @@ def show_session(
     print(f"[green]消息数:[/green] {metadata.message_count}")
 
     print_session_messages(messages)
+
+
+@app.command("export-session")
+def export_session(
+    session_id: str = typer.Option(..., "--session-id", help="会话ID"),
+    output: str = typer.Option("", "--output", help="导出文件路径"),
+):
+    session_manager = SessionManager("sessions")
+
+    if not session_manager.session_exists(session_id):
+        print(f"[red]会话不存在:[/red] {session_id}")
+        return
+
+    store = session_manager.get_store(session_id)
+    metadata = store.load_metadata()
+    messages = store.load_messages()
+
+    markdown = build_session_markdown(metadata, messages)
+
+    if output.strip():
+        output_path = Path(output).resolve()
+    else:
+        output_dir = Path("exports").resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"{session_id}.md"
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(markdown, encoding="utf-8")
+
+    print(f"[green]导出成功:[/green] {output_path}")
 
 @app.command("list-sessions")
 def list_sessions():
