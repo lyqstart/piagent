@@ -1,0 +1,25 @@
+{"timestamp":"2026-05-12T14:04:00.028Z","level":"WARN","component":"sf_specforge","event":"manifest.recovery_required","message":"Unable to infer runtime schema version. Marked recovery_required=true. Safe fill-in only, no automatic upgrade."}
+{"timestamp":"2026-05-12T14:04:00.048Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing directory: specforge/runtime/checkpoints"}
+{"timestamp":"2026-05-12T14:04:00.048Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing directory: specforge/sessions"}
+{"timestamp":"2026-05-12T14:04:00.049Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing directory: specforge/archive/agent_runs"}
+{"timestamp":"2026-05-12T14:04:00.050Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing directory: specforge/specs"}
+{"timestamp":"2026-05-12T14:04:00.051Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing directory: specforge/knowledge"}
+{"timestamp":"2026-05-12T14:04:00.051Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing directory: specforge/config"}
+{"timestamp":"2026-05-12T14:04:00.052Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing directory: specforge/agents/contracts"}
+{"timestamp":"2026-05-12T14:04:00.052Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/runtime/state.json"}
+{"timestamp":"2026-05-12T14:04:00.053Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/runtime/events.jsonl"}
+{"timestamp":"2026-05-12T14:04:00.054Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/config/project.json"}
+{"timestamp":"2026-05-12T14:04:00.054Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/config/risk_policy.json"}
+{"timestamp":"2026-05-12T14:04:00.055Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/config/skill_fragments.json"}
+{"timestamp":"2026-05-12T14:04:00.056Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: AGENTS.md"}
+{"timestamp":"2026-05-12T14:04:00.056Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/AGENT_CONSTITUTION.md"}
+{"timestamp":"2026-05-12T14:04:00.057Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-orchestrator.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.058Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-requirements.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.058Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-design.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.059Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-executor.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.059Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-debugger.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.060Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-task-planner.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.060Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-reviewer.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.060Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-verifier.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.061Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Created missing file: specforge/agents/contracts/sf-knowledge.contract.md"}
+{"timestamp":"2026-05-12T14:04:00.061Z","level":"INFO","component":"sf_specforge","event":"startup.repair","message":"Repair completed: 23 item(s) repaired"}

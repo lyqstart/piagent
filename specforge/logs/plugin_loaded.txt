@@ -1,0 +1,2 @@
+Plugin loaded at 2026-05-12T14:04:03.113Z
+directory: D:\code\temp\piagent

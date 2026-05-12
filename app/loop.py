@@ -38,13 +38,14 @@ class AgentLoop:
                 {
                     "step": step,
                     "message_count": len(working_messages),
+                    "message_roles": [m.role for m in working_messages],
                 },
             )
 
             response = self.llm.create_response(
                 messages = working_messages,
                 tools = self.tool_registry.schemas(),
-            )           
+            )
 
             assistant = response.choices[0].message
             assistant_tool_calls = None

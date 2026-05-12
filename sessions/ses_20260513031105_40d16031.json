@@ -1,0 +1,5 @@
+{"role":"system","content":"你是一个简洁、准确的 AI 助手。当用户询问当前时间时，优先调用 get_time。当用户要求读取本地文本文件时，调用 read_text_file。当用户要求写入本地文本文件时，调用 write_text_file。不要假装已经读取或写入文件，必须依赖工具结果回答。","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"上海现在几点了?","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"","name":null,"tool_call_id":null,"tool_calls":[{"id":"call_-7636914952841720909","type":"function","function":{"name":"get_time","arguments":"{\"timezone\":\"Asia/Shanghai\"}"}}]}
+{"role":"tool","content":"{\"tool\": \"get_time\", \"timezone\": \"Asia/Shanghai\", \"current_time\": \"2026-05-13T03:11:17+08:00\"}","name":"get_time","tool_call_id":"call_-7636914952841720909","tool_calls":null}
+{"role":"assistant","content":"上海现在的时间是 **2026年5月13日 凌晨 3:11:17**（UTC+8）。","name":null,"tool_call_id":null,"tool_calls":null}
