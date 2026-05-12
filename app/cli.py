@@ -4,6 +4,7 @@ from app.llm import LLMClient
 from app.config import get_settings
 from app.agent import Agent
 from app.session import SessionManager
+from app.messages import Message
 
 app = typer.Typer()
 
@@ -168,6 +169,53 @@ def rename_session(
     metadata = store.load_metadata()
     print(f"[green]已更新会话标题:[/green] {metadata.session_id}")
     print(f"[green]新标题:[/green] {metadata.title}")
+
+def format_message_brief(message: Message) -> str:
+    role = message.role.upper()
+    content = " ".join((message.content or "").strip().split())
+    if len(content) > 100:
+        content = content[:100] + "..."
+
+    if message.role == "assistant" and message.tool_calls:
+        return f"{role}: [tool_calls={len(message.tool_calls)}]"
+    
+    if message.role == "tool":
+        tool_name = message.name or "unknown_tool"
+        return f"{role}({tool_name}): {content}"
+    
+    return f"{role}: {content}"
+
+def print_session_messages(messages: list[Message]) -> None:
+    if not messages:
+        print("[yellow]没有消息记录。[/yellow]")
+        return
+    
+    print("[green]消息记录:[/green]")
+    for index, message in enumerate(messages, start=1):
+        print(f"{index}.{format_message_brief(message)}")
+
+@app.command("show-session")
+def show_session(
+    session_id: str = typer.Option(..., "--session-id", help="会话ID"),
+):
+    session_manager = SessionManager("sessions")
+
+    if not session_manager.session_exists(session_id):
+        print(f"[red]会话不存在: {session_id} [/red]")
+        return
+    
+    store = session_manager.get_store(session_id)
+    messages = store.load_messages()
+    metadata = store.load_metadata()
+
+    print(f"[green]会话ID:[/green] {metadata.session_id}")
+    print(f"[green]标题:[/green] {metadata.title or '(无标题)'}")
+    print(f"[green]模型:[/green] {metadata.model or 'unknown model'}")
+    print(f"[green]创建时间:[/green] {metadata.created_at}")
+    print(f"[green]更新时间:[/green] {metadata.updated_at}")
+    print(f"[green]消息数:[/green] {metadata.message_count}")
+
+    print_session_messages(messages)
 
 @app.command("list-sessions")
 def list_sessions():
