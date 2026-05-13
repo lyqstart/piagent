@@ -308,3 +308,17 @@ LLMClient 只是模型适配层。
 下一课继续：
 
 # 第 15 课：把你的 Python 项目收缩成“只保留骨架”的最小版本
+
+
+
+
+
+Pi 的核心骨架
+Agent
+AgentLoop
+AgentMessage
+LLMClient
+ToolRegistry
+SessionStore
+ContextBuilder
+事件流

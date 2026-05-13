@@ -1,10 +1,9 @@
-from app.messages import Message
+from app.messages import Message, AgentMessage
 from app.llm import LLMClient
 from app.session import SessionStore
 from app.tools import ToolRegistry
 from app.loop import AgentLoop
 from app.events import EventHandler
-from app.messages import AgentMessage
 
 class Agent:
     def __init__(self, llm: LLMClient, 
@@ -22,9 +21,9 @@ class Agent:
         )
         
         if self.session_store:
-            self.messages:list[Message] = self.session_store.load_messages()
+            self.messages:list[AgentMessage] = self.session_store.load_messages()
         else:
-            self.messages:list[Message] = []
+            self.messages:list[AgentMessage] = []
 
         if system_prompt and not self.messages:
             self._append_message(Message(role="system", content=system_prompt))
@@ -52,5 +51,5 @@ class Agent:
             
         return ""
     
-    def get_history(self) -> list[Message]:
+    def get_history(self) -> list[AgentMessage]:
         return self.messages

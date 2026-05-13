@@ -4,9 +4,7 @@ from uuid import uuid4
 from datetime import datetime
 from dataclasses import dataclass, asdict
 import json
-from app.messages import AgentMessage
-
-from app.messages import Message
+from app.messages import Message, AgentMessage
 
 def now_iso() -> str:
     return datetime.now().isoformat(timespec="seconds")
@@ -46,11 +44,11 @@ class SessionStore:
         
         self._save_metadata(metadata)
 
-    def load_messages(self) -> list[Message]:
+    def load_messages(self) -> list[AgentMessage]:
         if not self.session_file.exists():
             return []
         
-        messages: list[Message] = []
+        messages: list[AgentMessage] = []
         with self.session_file.open("r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()

@@ -19,7 +19,7 @@ class LLMClient:
         self.max_context_messages = max_context_messages
         self.context_bundle = context_bundle or ContextBundle()
 
-    def build_fixed_context(self, messages: list[AgentMessage]) -> list[Message]:
+    def build_fixed_context(self, messages: list[AgentMessage]) -> list[AgentMessage]:
         fixed: list[AgentMessage] = []
 
         if messages and messages[0].role == "system":
@@ -32,7 +32,7 @@ class LLMClient:
         
         return fixed
     
-    def build_rolling_context(self, messages: list[AgentMessage], fixed_count: int) -> list[Message]:
+    def build_rolling_context(self, messages: list[AgentMessage], fixed_count: int) -> list[AgentMessage]:
         rolling = messages[1:] if messages and messages[0].role == "system" else list(messages)
 
         keep_count = self.max_context_messages - fixed_count
@@ -90,28 +90,7 @@ class LLMClient:
         )
         return response.choices[0].message.content or ""
     
-    def _to_api_message(self, messages:list[AgentMessage]) -> list[dict]:
-        api_messages: list[dict] = []
-
-        for message in messages:
-            item = {"role": message.role}
-
-            if message.content is not None:
-                item["content"] = message.content
-
-            if message.name is not None:
-                item["name"] = message.name
-
-            if message.tool_call_id is not None:
-                item["tool_call_id"] = message.tool_call_id
-            
-            if message.tool_calls is not None:
-                item["tool_calls"] = message.tool_calls
-            
-            api_messages.append(item)
-
-        return api_messages
-        
+ 
     def create_response(self, messages: list[AgentMessage], tools: list[dict] | None = None) :
         transformed_messages = self.transform_context(messages)
         llm_messages = self.convert_to_llm_messages(transformed_messages)

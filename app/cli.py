@@ -5,7 +5,7 @@ from app.llm import LLMClient
 from app.config import get_settings
 from app.agent import Agent
 from app.session import SessionManager
-from app.messages import Message
+from app.messages import Message, AgentMessage
 from app.context import ContextBuilder
 
 app = typer.Typer()
@@ -68,7 +68,6 @@ def start_chat(
         answer = agent.run(user_input)
         print(f"[cyan]AI>[/cyan] {answer}")
 
-
 def console_event_handler(event_type: str, payload: dict) -> None:
     if event_type == "loop_start":
         print(f"[magenta]EVENT[/magenta]: loop_start | messages={payload['message_count']}")
@@ -110,6 +109,74 @@ def console_event_handler(event_type: str, payload: dict) -> None:
     elif event_type == "loop_end":
         print(f"[magenta]EVENT[/magenta] loop_end | reason={payload['reason']}")
 
+def format_message_brief(message: Message) -> str:
+    role = message.role.upper()
+    content = " ".join((message.content or "").strip().split())
+    if len(content) > 100:
+        content = content[:100] + "..."
+
+    if message.role == "assistant" and message.tool_calls:
+        return f"{role}: [tool_calls={len(message.tool_calls)}]"
+    
+    if message.role == "tool":
+        tool_name = message.name or "unknown_tool"
+        return f"{role}({tool_name}): {content}"
+    
+    return f"{role}: {content}"
+
+def print_session_messages(messages: list[AgentMessage]) -> None:
+    if not messages:
+        print("[yellow]没有消息记录。[/yellow]")
+        return
+    
+    print("[green]消息记录:[/green]")
+    for index, message in enumerate(messages, start=1):
+        print(f"{index}.{format_message_brief(message)}")
+
+def build_session_markdown(metadata, messages: list[AgentMessage]) -> str:
+    lines: list[str] = []
+
+    lines.append(f"# Session {metadata.session_id}")
+    lines.append("")
+    lines.append(f"- Title: {metadata.title or '(无标题)'}")
+    lines.append(f"- Model: {metadata.model or 'unknown model'}")
+    lines.append(f"- Created At: {metadata.created_at}")
+    lines.append(f"- Updated At: {metadata.updated_at}")
+    lines.append(f"- Message Count: {metadata.message_count}")
+    lines.append("")
+    lines.append("## Messages")
+    lines.append("")
+
+    for index, message in enumerate(messages, start=1):
+        role = message.role.upper()
+        lines.append(f"### {index}. {role}")
+
+        if message.name:
+            lines.append(f"- name: {message.name}")
+
+        if message.tool_call_id:
+            lines.append(f"- tool_call_id: {message.tool_call_id}")
+
+        if message.tool_calls:
+            lines.append("- tool_calls:")
+            for tool_call in message.tool_calls:
+                call_id = tool_call.get("id", "")
+                function = tool_call.get("function", {})
+                function_name = function.get("name", "")
+                function_arguments = function.get("arguments", "")
+                lines.append(f"  - id: {call_id}")
+                lines.append(f"    function: {function_name}")
+                lines.append(f"    arguments: {function_arguments}")
+
+        content = (message.content or "").strip()
+        lines.append("")
+        lines.append("```text")
+        lines.append(content)
+        lines.append("```")
+        lines.append("")
+
+    return "\n".join(lines)
+
 @app.command()
 def run(
     model: str = "", 
@@ -148,6 +215,86 @@ def resume(
         reset = False,
         verbose = verbose,
     )
+
+@app.command("list-sessions")
+def list_sessions():
+    session_manager = SessionManager("sessions")
+    sessions = session_manager.list_sessions()
+
+    print(f"[green]sessions目录:[/green] {session_manager.session_dir}")
+    if not sessions:
+        print("[yellow]没有找到任何会话记录。[/yellow]")
+        return
+    
+    print("[green]已有会话:[/green]")
+    for index, s in enumerate(sessions, start=1):
+        title = s.title or "(无标题)"
+        model = s.model or "unknown model"
+        print(
+            f"{index}. {s.session_id}\n"
+            f"   title: {title}\n"
+            f"   model: {model}\n"
+            f"   updated: {s.updated_at}\n"
+            f"   messages: {s.message_count}"
+        )
+
+
+if __name__ == "__main__":
+    app()
+
+#----- non-core session management commands -----
+
+@app.command("show-session")
+def show_session(
+    session_id: str = typer.Option(..., "--session-id", help="会话ID"),
+):
+    session_manager = SessionManager("sessions")
+
+    if not session_manager.session_exists(session_id):
+        print(f"[red]会话不存在: {session_id} [/red]")
+        return
+    
+    store = session_manager.get_store(session_id)
+    messages = store.load_messages()
+    metadata = store.load_metadata()
+
+    print(f"[green]会话ID:[/green] {metadata.session_id}")
+    print(f"[green]标题:[/green] {metadata.title or '(无标题)'}")
+    print(f"[green]模型:[/green] {metadata.model or 'unknown model'}")
+    print(f"[green]创建时间:[/green] {metadata.created_at}")
+    print(f"[green]更新时间:[/green] {metadata.updated_at}")
+    print(f"[green]消息数:[/green] {metadata.message_count}")
+
+    print_session_messages(messages)
+
+@app.command("export-session")
+def export_session(
+    session_id: str = typer.Option(..., "--session-id", help="会话ID"),
+    output: str = typer.Option("", "--output", help="导出文件路径"),
+):
+    session_manager = SessionManager("sessions")
+
+    if not session_manager.session_exists(session_id):
+        print(f"[red]会话不存在:[/red] {session_id}")
+        return
+
+    store = session_manager.get_store(session_id)
+    metadata = store.load_metadata()
+    messages = store.load_messages()
+
+    markdown = build_session_markdown(metadata, messages)
+
+    if output.strip():
+        output_path = Path(output).resolve()
+    else:
+        output_dir = Path("exports").resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"{session_id}.md"
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(markdown, encoding="utf-8")
+
+    print(f"[green]导出成功:[/green] {output_path}")
 
 @app.command("resume-latest")
 def resume_latest(
@@ -192,151 +339,3 @@ def rename_session(
     metadata = store.load_metadata()
     print(f"[green]已更新会话标题:[/green] {metadata.session_id}")
     print(f"[green]新标题:[/green] {metadata.title}")
-
-def format_message_brief(message: Message) -> str:
-    role = message.role.upper()
-    content = " ".join((message.content or "").strip().split())
-    if len(content) > 100:
-        content = content[:100] + "..."
-
-    if message.role == "assistant" and message.tool_calls:
-        return f"{role}: [tool_calls={len(message.tool_calls)}]"
-    
-    if message.role == "tool":
-        tool_name = message.name or "unknown_tool"
-        return f"{role}({tool_name}): {content}"
-    
-    return f"{role}: {content}"
-
-def print_session_messages(messages: list[Message]) -> None:
-    if not messages:
-        print("[yellow]没有消息记录。[/yellow]")
-        return
-    
-    print("[green]消息记录:[/green]")
-    for index, message in enumerate(messages, start=1):
-        print(f"{index}.{format_message_brief(message)}")
-
-def build_session_markdown(metadata, messages: list[Message]) -> str:
-    lines: list[str] = []
-
-    lines.append(f"# Session {metadata.session_id}")
-    lines.append("")
-    lines.append(f"- Title: {metadata.title or '(无标题)'}")
-    lines.append(f"- Model: {metadata.model or 'unknown model'}")
-    lines.append(f"- Created At: {metadata.created_at}")
-    lines.append(f"- Updated At: {metadata.updated_at}")
-    lines.append(f"- Message Count: {metadata.message_count}")
-    lines.append("")
-    lines.append("## Messages")
-    lines.append("")
-
-    for index, message in enumerate(messages, start=1):
-        role = message.role.upper()
-        lines.append(f"### {index}. {role}")
-
-        if message.name:
-            lines.append(f"- name: {message.name}")
-
-        if message.tool_call_id:
-            lines.append(f"- tool_call_id: {message.tool_call_id}")
-
-        if message.tool_calls:
-            lines.append("- tool_calls:")
-            for tool_call in message.tool_calls:
-                call_id = tool_call.get("id", "")
-                function = tool_call.get("function", {})
-                function_name = function.get("name", "")
-                function_arguments = function.get("arguments", "")
-                lines.append(f"  - id: {call_id}")
-                lines.append(f"    function: {function_name}")
-                lines.append(f"    arguments: {function_arguments}")
-
-        content = (message.content or "").strip()
-        lines.append("")
-        lines.append("```text")
-        lines.append(content)
-        lines.append("```")
-        lines.append("")
-
-    return "\n".join(lines)
-
-@app.command("show-session")
-def show_session(
-    session_id: str = typer.Option(..., "--session-id", help="会话ID"),
-):
-    session_manager = SessionManager("sessions")
-
-    if not session_manager.session_exists(session_id):
-        print(f"[red]会话不存在: {session_id} [/red]")
-        return
-    
-    store = session_manager.get_store(session_id)
-    messages = store.load_messages()
-    metadata = store.load_metadata()
-
-    print(f"[green]会话ID:[/green] {metadata.session_id}")
-    print(f"[green]标题:[/green] {metadata.title or '(无标题)'}")
-    print(f"[green]模型:[/green] {metadata.model or 'unknown model'}")
-    print(f"[green]创建时间:[/green] {metadata.created_at}")
-    print(f"[green]更新时间:[/green] {metadata.updated_at}")
-    print(f"[green]消息数:[/green] {metadata.message_count}")
-
-    print_session_messages(messages)
-
-
-@app.command("export-session")
-def export_session(
-    session_id: str = typer.Option(..., "--session-id", help="会话ID"),
-    output: str = typer.Option("", "--output", help="导出文件路径"),
-):
-    session_manager = SessionManager("sessions")
-
-    if not session_manager.session_exists(session_id):
-        print(f"[red]会话不存在:[/red] {session_id}")
-        return
-
-    store = session_manager.get_store(session_id)
-    metadata = store.load_metadata()
-    messages = store.load_messages()
-
-    markdown = build_session_markdown(metadata, messages)
-
-    if output.strip():
-        output_path = Path(output).resolve()
-    else:
-        output_dir = Path("exports").resolve()
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / f"{session_id}.md"
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(markdown, encoding="utf-8")
-
-    print(f"[green]导出成功:[/green] {output_path}")
-
-@app.command("list-sessions")
-def list_sessions():
-    session_manager = SessionManager("sessions")
-    sessions = session_manager.list_sessions()
-
-    print(f"[green]sessions目录:[/green] {session_manager.session_dir}")
-    if not sessions:
-        print("[yellow]没有找到任何会话记录。[/yellow]")
-        return
-    
-    print("[green]已有会话:[/green]")
-    for index, s in enumerate(sessions, start=1):
-        title = s.title or "(无标题)"
-        model = s.model or "unknown model"
-        print(
-            f"{index}. {s.session_id}\n"
-            f"   title: {title}\n"
-            f"   model: {model}\n"
-            f"   updated: {s.updated_at}\n"
-            f"   messages: {s.message_count}"
-        )
-
-
-
-if __name__ == "__main__":
-    app()
