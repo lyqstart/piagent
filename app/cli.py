@@ -6,6 +6,7 @@ from app.config import get_settings
 from app.agent import Agent
 from app.session import SessionManager
 from app.messages import Message
+from app.context import ContextBuilder
 
 app = typer.Typer()
 
@@ -18,7 +19,13 @@ def start_chat(
     verbose: bool = True,
 ) -> None:
     settings = get_settings(model=model or None)
-    llm = LLMClient(settings = settings)
+
+    context_builder = ContextBuilder(project_root=".")
+    context_bundle = context_builder.build()
+    llm = LLMClient(
+        settings = settings,
+        context_bundle = context_bundle
+    )
 
     session_manager = SessionManager("sessions")
     session_store = session_manager.create_store(

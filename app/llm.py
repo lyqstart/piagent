@@ -1,13 +1,14 @@
 from openai import OpenAI
 from app.messages import Message
 from app.config import Settings
+from app.context import ContextBundle
 
 class LLMClient:
     def __init__(
             self, 
             settings: Settings, 
             max_context_messages: int = 8,
-            project_context: str = "",
+            context_bundle: ContextBundle | None = None
     ):
         self.client = OpenAI(
             api_key = settings.api_key,
@@ -15,7 +16,7 @@ class LLMClient:
         )
         self.model = settings.model
         self.max_context_messages = max_context_messages
-        self.project_context = project_context.strip()
+        self.context_bundle = context_bundle or ContextBundle()
 
     def build_fixed_context(self, messages: list[Message]) -> list[Message]:
         fixed: list[Message] = []
@@ -23,9 +24,9 @@ class LLMClient:
         if messages and messages[0].role == "system":
             fixed.append(messages[0])
 
-        if self.project_context:
+        if self.context_bundle.project_context:
             fixed.append(
-                Message(role="system", content=f"项目上下文：\n{self.project_context}")
+                Message(role="system", content=f"项目上下文：\n{self.context_bundle.project_context}")
             )
         
         return fixed
