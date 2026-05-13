@@ -2,6 +2,7 @@ from app.messages import Message
 from app.llm import LLMClient
 from app.tools import ToolRegistry
 from app.events import EventHandler
+from app.messages import AgentMessage
 
 class AgentLoop:
     def __init__(
@@ -21,8 +22,42 @@ class AgentLoop:
         if self.event_handler:
             self.event_handler(event_type, payload)
 
-    def run(self, messages: list[Message]) -> list[Message]:
-        new_messages: list[Message] = []
+    def _emit_assistant_message_lifecycle(self, step: int, content: str) -> None:
+        self._emit(
+            "message_start",
+            {
+                "step": step,
+                "role": "assistant",
+            },
+        )
+
+        current = ""
+        chunk_size = 20
+
+        for i in range(0, len(content), chunk_size):
+            chunk = content[i:i + chunk_size]
+            current += chunk
+            self._emit(
+                "message_update",
+                {
+                    "step": step,
+                    "role": "assistant",
+                    "chunk": chunk,
+                    "content": current,
+                },
+            )
+        
+        self._emit(
+            "message_end",
+            {
+                "step": step,
+                "role": "assistant",
+                "content": current,
+            },
+        )
+
+    def run(self, messages: list[AgentMessage]) -> list[AgentMessage]:
+        new_messages: list[AgentMessage] = []
         working_messages = list(messages)
 
         self._emit(
@@ -48,6 +83,7 @@ class AgentLoop:
             )
 
             assistant = response.choices[0].message
+            assistant_content = assistant.content or ""
             assistant_tool_calls = None
 
             if assistant.tool_calls:
@@ -63,7 +99,10 @@ class AgentLoop:
                     for tool_call in assistant.tool_calls
                 ]
             
-            assistant_message = Message(
+            if assistant_content:
+                self._emit_assistant_message_lifecycle(step, assistant_content)
+
+            assistant_message = AgentMessage(
                 role="assistant",
                 content=assistant.content,
                 tool_calls=assistant_tool_calls,
@@ -104,7 +143,7 @@ class AgentLoop:
 
                 tool_result = self.tool_registry.execute_tool_call(tool_call)
 
-                tool_message = Message(
+                tool_message = AgentMessage(
                     role="tool",
                     content=tool_result,
                     name=tool_call.function.name,

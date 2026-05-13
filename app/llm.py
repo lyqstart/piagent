@@ -2,6 +2,7 @@ from openai import OpenAI
 from app.messages import Message
 from app.config import Settings
 from app.context import ContextBundle
+from app.messages import AgentMessage
 
 class LLMClient:
     def __init__(
@@ -18,20 +19,20 @@ class LLMClient:
         self.max_context_messages = max_context_messages
         self.context_bundle = context_bundle or ContextBundle()
 
-    def build_fixed_context(self, messages: list[Message]) -> list[Message]:
-        fixed: list[Message] = []
+    def build_fixed_context(self, messages: list[AgentMessage]) -> list[Message]:
+        fixed: list[AgentMessage] = []
 
         if messages and messages[0].role == "system":
             fixed.append(messages[0])
 
         if self.context_bundle.project_context:
             fixed.append(
-                Message(role="system", content=f"项目上下文：\n{self.context_bundle.project_context}")
+                AgentMessage(role="system", content=f"项目上下文：\n{self.context_bundle.project_context}")
             )
         
         return fixed
     
-    def build_rolling_context(self, messages: list[Message], fixed_count: int) -> list[Message]:
+    def build_rolling_context(self, messages: list[AgentMessage], fixed_count: int) -> list[Message]:
         rolling = messages[1:] if messages and messages[0].role == "system" else list(messages)
 
         keep_count = self.max_context_messages - fixed_count
@@ -40,7 +41,7 @@ class LLMClient:
         
         return rolling[-keep_count:]
 
-    def transform_context(self, messages: list[Message]) -> list[dict]:
+    def transform_context(self, messages: list[AgentMessage]) -> list[dict]:
         print("LLMClient: transform_context")
         print("  原始消息数:", len(messages))
         
@@ -55,7 +56,7 @@ class LLMClient:
 
         return transformed
 
-    def convert_to_llm_messages(self, messages: list[Message]) -> list[dict]:
+    def convert_to_llm_messages(self, messages: list[AgentMessage]) -> list[dict]:
         print("LLMClient: convert_to_llm_messages")
         print("  输入消息角色:", [m.role for m in messages])
 
@@ -82,14 +83,14 @@ class LLMClient:
         return api_messages
     
 
-    def complete(self, messages: list[Message]) -> str:
+    def complete(self, messages: list[AgentMessage]) -> str:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[{"role": m.role, "content": m.content} for m in messages],
         )
         return response.choices[0].message.content or ""
     
-    def _to_api_message(self, messages:list[Message]) -> list[dict]:
+    def _to_api_message(self, messages:list[AgentMessage]) -> list[dict]:
         api_messages: list[dict] = []
 
         for message in messages:
@@ -111,7 +112,7 @@ class LLMClient:
 
         return api_messages
         
-    def create_response(self, messages: list[Message], tools: list[dict] | None = None) :
+    def create_response(self, messages: list[AgentMessage], tools: list[dict] | None = None) :
         transformed_messages = self.transform_context(messages)
         llm_messages = self.convert_to_llm_messages(transformed_messages)
 

@@ -4,6 +4,7 @@ from uuid import uuid4
 from datetime import datetime
 from dataclasses import dataclass, asdict
 import json
+from app.messages import AgentMessage
 
 from app.messages import Message
 

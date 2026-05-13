@@ -1,4 +1,5 @@
 from typing import Callable, Any
 
-EventHandler = Callable[[str, dict[str, Any]], None]
+EventPayload = dict[str, Any]
+EventHandler = Callable[[str, EventPayload], None]
 

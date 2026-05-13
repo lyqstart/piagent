@@ -4,6 +4,7 @@ from app.session import SessionStore
 from app.tools import ToolRegistry
 from app.loop import AgentLoop
 from app.events import EventHandler
+from app.messages import AgentMessage
 
 class Agent:
     def __init__(self, llm: LLMClient, 

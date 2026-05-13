@@ -1,0 +1,5 @@
+{"role":"system","content":"你是一个简洁、准确的 AI 助手。当用户询问当前时间时，优先调用 get_time。当用户要求读取本地文本文件时，调用 read_text_file。当用户要求写入本地文本文件时，调用 write_text_file。不要假装已经读取或写入文件，必须依赖工具结果回答。","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"请用两句话介绍一下你自己","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"我是一个简洁、准确的 AI 助手，擅长通过调用工具来帮您完成任务，比如查询时间、读写本地文件等。在当前项目中，我将协助你理解 pi-agent 核心骨架的各个模块边界，用清晰的实践帮助你加深认识。","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"你给我讲一个100字左右的笑话","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"老师问小明：\"如果你有12块糖，我向你要3块，你还剩几块？\"小明答：\"12块。\"老师：\"你不会减法吗？\"小明：\"我会，但我不会给你。\"","name":null,"tool_call_id":null,"tool_calls":null}

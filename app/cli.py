@@ -77,6 +77,21 @@ def console_event_handler(event_type: str, payload: dict) -> None:
             f"[magenta]EVENT[/magenta]: llm_request_start | "
             f"step={payload['step']} messages={payload['message_count']}"
         )
+    elif event_type == "message_start":
+        print(
+            f"[magenta]EVENT[/magenta] message_start | "
+            f"step={payload['step']} role={payload['role']}"
+        )
+    elif event_type == "message_update":
+        print(
+            f"[magenta]EVENT[/magenta] message_update | "
+            f"step={payload['step']} chunk={payload['chunk']} "
+        )
+    elif event_type == "message_end":
+        print(
+            f"[magenta]EVENT[/magenta] message_end | "
+            f"step={payload['step']} role={payload['role']}"
+        )
     elif event_type == "llm_response":
         print(
             f"[magenta]EVENT[/magenta] llm_response | "
