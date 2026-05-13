@@ -3,46 +3,55 @@ from app.messages import Message
 from app.config import Settings
 
 class LLMClient:
-    def __init__(self, settings: Settings, max_context_messages: int = 8):
+    def __init__(
+            self, 
+            settings: Settings, 
+            max_context_messages: int = 8,
+            project_context: str = "",
+    ):
         self.client = OpenAI(
             api_key = settings.api_key,
             base_url = settings.base_url,
         )
         self.model = settings.model
         self.max_context_messages = max_context_messages
+        self.project_context = project_context.strip()
+
+    def build_fixed_context(self, messages: list[Message]) -> list[Message]:
+        fixed: list[Message] = []
+
+        if messages and messages[0].role == "system":
+            fixed.append(messages[0])
+
+        if self.project_context:
+            fixed.append(
+                Message(role="system", content=f"项目上下文：\n{self.project_context}")
+            )
+        
+        return fixed
+    
+    def build_rolling_context(self, messages: list[Message], fixed_count: int) -> list[Message]:
+        rolling = messages[1:] if messages and messages[0].role == "system" else list(messages)
+
+        keep_count = self.max_context_messages - fixed_count
+        if keep_count <= 0:
+            return []
+        
+        return rolling[-keep_count:]
 
     def transform_context(self, messages: list[Message]) -> list[dict]:
         print("LLMClient: transform_context")
         print("  原始消息数:", len(messages))
         
-        if len(messages) <= self.max_context_messages:
-            transformed = list(messages)
-            print("  未裁剪")
-            print("  输出消息数:", len(transformed))
-            return transformed
+        fixed = self.build_fixed_context(messages)
+        rolling = self.build_rolling_context(messages, fixed_count=len(fixed))
+        transformed = fixed + rolling
 
-        system_message = None
-        other_messages = messages
-
-        if messages and messages[0].role == "system":
-            system_message = messages[0]
-            other_messages = messages[1:]
-
-        keep_count = self.max_context_messages
-        if system_message is not None:
-            keep_count -= 1
-        
-        trimmed_messages = other_messages[-keep_count:]
-
-        if system_message is not None:
-            transformed = [system_message] + trimmed_messages
-        else:
-            transformed = trimmed_messages
-        
-        print("  已裁剪")
+        print("  固定上下文数:", len(fixed))
+        print("  滚动上下文数:", len(rolling))
         print("  输出消息数:", len(transformed))
         print("  输出消息角色:", [m.role for m in transformed])
-        
+
         return transformed
 
     def convert_to_llm_messages(self, messages: list[Message]) -> list[dict]:

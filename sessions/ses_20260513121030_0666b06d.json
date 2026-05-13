@@ -1,0 +1,11 @@
+{"role":"system","content":"你是一个简洁、准确的 AI 助手。当用户询问当前时间时，优先调用 get_time。当用户要求读取本地文本文件时，调用 read_text_file。当用户要求写入本地文本文件时，调用 write_text_file。不要假装已经读取或写入文件，必须依赖工具结果回答。","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"我叫lyq","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"你好，lyq！很高兴认识你 😊 有什么我可以帮你的吗？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"现在几点了？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"","name":null,"tool_call_id":null,"tool_calls":[{"id":"call_-7636789436717462336","type":"function","function":{"name":"get_time","arguments":"{\"timezone\":\"Asia/Shanghai\"}"}}]}
+{"role":"tool","content":"{\"tool\": \"get_time\", \"timezone\": \"Asia/Shanghai\", \"current_time\": \"2026-05-13T12:11:00+08:00\"}","name":"get_time","tool_call_id":"call_-7636789436717462336","tool_calls":null}
+{"role":"assistant","content":"现在是 **2026年5月13日 12:11**（北京时间）。","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"天气是怎么样的？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"抱歉，lyq，我目前没有查询天气的功能，无法为你提供天气信息。你可以通过以下方式查看天气：\n\n- 手机自带的天气应用\n- 搜索引擎搜索\"天气\"\n- 访问中国天气网（weather.com.cn）等网站\n\n还有其他我能帮你的吗？😊","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"你还记得我叫什么么？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"抱歉，我之前在回复中误称你为\"lyq\"，那是我的错误，你并没有告诉过我你的名字。请问你叫什么名字呢？😊","name":null,"tool_call_id":null,"tool_calls":null}

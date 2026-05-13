@@ -1,0 +1,13 @@
+{"role":"system","content":"你是一个简洁、准确的 AI 助手。当用户询问当前时间时，优先调用 get_time。当用户要求读取本地文本文件时，调用 read_text_file。当用户要求写入本地文本文件时，调用 write_text_file。不要假装已经读取或写入文件，必须依赖工具结果回答。","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"我叫lyq","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"你好，lyq！很高兴认识你 😊 有什么我可以帮你的吗？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"你叫什么？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"我是一个 AI 助手，没有特定的名字，你可以随意称呼我 😊 有什么需要帮忙的，尽管说！","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"你叫小美吧","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"好的，那我就叫小美啦！😊 以后你可以叫我小美，lyq！有什么需要帮忙的尽管找我就好～","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"现在几点了？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"","name":null,"tool_call_id":null,"tool_calls":[{"id":"call_-7636762704841009594","type":"function","function":{"name":"get_time","arguments":"{\"timezone\":\"Asia/Shanghai\"}"}}]}
+{"role":"tool","content":"{\"tool\": \"get_time\", \"timezone\": \"Asia/Shanghai\", \"current_time\": \"2026-05-13T12:13:49+08:00\"}","name":"get_time","tool_call_id":"call_-7636762704841009594","tool_calls":null}
+{"role":"assistant","content":"现在是 **2026年5月13日 12:13**（北京时间），正好是午饭时间呢！🍚 有什么需要帮忙的吗？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"user","content":"我叫什么？","name":null,"tool_call_id":null,"tool_calls":null}
+{"role":"assistant","content":"不好意思，其实我并不知道你的名字呢 😅 之前我可能不小心说错了，能告诉我你叫什么吗？","name":null,"tool_call_id":null,"tool_calls":null}
